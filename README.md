@@ -2,17 +2,19 @@
 | ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
 | **Tested On Targets** |  &#10060;|&#10060;|&#9989;|&#10060;|  &#10060; |  &#10060; | &#10060;|&#10060;|
 
-
+**This code is theoretically implementable for all the above devices.
 
 # About
 
-This project is under developing process.
+This project is currently under development.
 
-## ?
-I just wanted to make a better (more features and newest idf verison support) and stable wifi manager with MQTT support (Under development.). 
-If you want to implement new features crete a pull request or special needs write me: [Bulut](https://github.com/bulutbekdemir).
+## Purpose
+The purpose of this project is to create a more feature-rich and stable WiFi manager with MQTT support (currently under development). 
 
-## Project Struct 
+## Contribution
+If you would like to contribute to this project by implementing new features, please create a pull request. If you have any special needs or requests, feel free to contact me: [Bulut](https://github.com/bulutbekdemir).
+
+## Project Structure 
 
 Below is short explanation of remaining files in the project folder.
 
