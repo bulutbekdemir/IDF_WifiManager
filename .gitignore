@@ -1,0 +1,14 @@
+# IDF files
+sdkconfig
+sdkconfig.old
+sdkconfig.ci
+
+# Build files
+**/build/
+
+# Visual Studio Code
+.vscode/
+
+# Docker
+Dockerfile
+.devcontainer/
