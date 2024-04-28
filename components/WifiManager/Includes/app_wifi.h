@@ -89,10 +89,10 @@ void wifi_app_init(void);
 wifi_config_t* wifi_app_get_wifi_config(void);
 
 /*!
-* @brief Scan for available wifi networks
-*
+* @brief Gets the scanned wifi networks
+* @param  void
+* @return wifi_ap_record_t* 
 */
-
-
+wifi_ap_record_t* wifi_app_get_scanned_wifi_networks(void);
 
 #endif /* WIFI_APP_H_ */

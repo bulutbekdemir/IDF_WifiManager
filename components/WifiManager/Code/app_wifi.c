@@ -38,8 +38,6 @@ static QueueHandle_t wifi_app_queue_handle;
 esp_netif_t *esp_sta_netif;
 esp_netif_t *esp_ap_netif;
 
-//! @todo: Add function declarations.
-
 /*!
  * @brief Wifi Application Event Handler
  * @param arg_data, that is passed to the handler when its called
@@ -228,6 +226,10 @@ static void wifi_app_connect_sta(void)
 	ESP_ERROR_CHECK(esp_wifi_connect());	
 }
 
+/*!
+* @brief Closes the AP and sets the wifi mode to STA
+*
+*/
 static void wifi_app_close_ap(void)
 {
 	wifi_mode_t mode;
@@ -238,6 +240,10 @@ static void wifi_app_close_ap(void)
 	}
 }
 
+/*!
+* @brief Scans the wifi networks
+*
+*/
 static void wifi_app_scan_wifi_networks(void)
 {
 	wifi_ap_records = (wifi_ap_record_t *)malloc(MAX_SCAN_LIST_SIZE * sizeof(wifi_ap_record_t));
