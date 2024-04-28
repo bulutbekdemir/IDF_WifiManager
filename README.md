@@ -4,13 +4,13 @@
 
 
 
-# __
+# About
 
-This project is under construction.
+This project is under developing process.
 
 ## ?
-I just wanted to make a better (more features and newest idf verison support) and stable wifi manager with MQTT support. 
-If you want to implement new features crete a pull request or special needs write me: [Sincap](https://github.com/bulutbekdemir).
+I just wanted to make a better (more features and newest idf verison support) and stable wifi manager with MQTT support (Under development.). 
+If you want to implement new features crete a pull request or special needs write me: [Bulut](https://github.com/bulutbekdemir).
 
 ## Project Struct 
 
@@ -22,7 +22,7 @@ Below is short explanation of remaining files in the project folder.
 │   ├── CMakeLists.txt
 │   └── main.c 
 ├── components
-|		├── WifiManager																	---> Our WifiManager
+|		├── WifiManager	---> WifiManager Component
 |		│   ├── CMakeLists.txt
 |		│   ├── KConfig
 |		|   └── Includes
@@ -40,22 +40,25 @@ Below is short explanation of remaining files in the project folder.
 |		|   |   └── app.js
 |		|   |   └── app.css
 |		|   |   └── lib
-|		|   |   |   └── jquery-3.1.1.min.js							---> Used libary for js
+|		|   |   |   └── jquery-3.1.1.min.js	---> Used libary for js
 |		|   |   └── icons
 |		|   |   |   └── favicon.ico
 |		|   |   |   └── wifi_full.ico
 |		|   |   |   └── wifi_three.ico
 |		|   |   |   └── wifi_two.ico
 |		|   |   |   └── wifi_err.ico
-|		|   |   |   └── Original												---> Original files of .ico files	
+|		|   |   |   └── Original					 ---> Original files of .ico files	
 |		|   |   |   |   └── wifi_full.png
 |		|   |   |   |   └── wifi_three.png
 |		|   |   |   |   └── wifi_two.png
 |		|   |   |   |   └── wifi_err.png
 |		|   |   |   |   └── wifi_full.svg
-|		├── tMQTT 																			---> Reserved for future project.
+|		├── tMQTT 	---> Reserved for future project.
 └── README.md                  
 ```
 
 # TODOs
 
+1. Scan Feature
+2. Better html
+3. Wifi without password
