@@ -21,7 +21,7 @@
 static const char *TAG = "app_nvs";
 
 // NVS namespace
-static const char nvs_sta_namespace[] = "app_nvs_sta_creds";
+static const char nvs_sta_namespace[] = "nvs_sta_creds"; ///> NVS key max length is 15 characters
 
 /*!
 * @brief Save the STA credentials to NVS 
@@ -159,5 +159,8 @@ esp_err_t app_nvs_clear_sta_creds(void)
 	}
 
 	nvs_close(nvshandle);
+	
+	ESP_LOGI(TAG, "Cleared the NVS");
+
 	return ESP_OK;
 }

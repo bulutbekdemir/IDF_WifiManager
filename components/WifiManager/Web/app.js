@@ -8,7 +8,6 @@ var wifiConnectInterval = null;
  * Initialize functions here.
  */
 $(document).ready(function(){
-	getUpdateStatus();
     $("#connect_wifi").on("click", function(){
         checkCredentials();
     }); 
