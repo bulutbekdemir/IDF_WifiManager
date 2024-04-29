@@ -96,10 +96,6 @@ static void http_server_monitor_task(void *pvParameters)
 					///> Create the timer for the AP to close
 					http_server_timer_update_reset_timer(NULL);							
 					break;
-				case HTTP_SERVER_MSG_WIFI_CONNECT_FAIL:
-					ESP_LOGI(TAG, "HTTP_SERVER_MSG_WIFI_CONNECT_FAIL");
-					g_wifi_connect_status = HTTP_SERVER_WIFI_CONNECT_FAIL;
-					break;
 				case HTTP_SERVER_MSG_WIFI_SCAN_DONE:
 					ESP_LOGI(TAG, "HTTP_SERVER_MSG_WIFI_SCAN_DONE");
 					//!TODO: Implement the scan done event
@@ -417,5 +413,6 @@ void http_server_AP_close_timer_callback(void *arg)
 		}	
 		///> Close the AP
 		wifi_app_send_message(WIFI_APP_MSG_CLOSE_AP); ///> Send close AP message
+		wifi_app_send_message(WIFI_APP_WRITE_STA_CREDENTIALS); ///> Save the STA credentials
 	}
 }

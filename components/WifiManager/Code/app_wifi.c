@@ -18,6 +18,7 @@
 #include "app_FreeRTOS.h"
 #include "app_wifi.h"
 #include "app_http_server.h"
+#include "app_nvs.h"
 
 //Tag for logging
 static const char *TAG = "WIFI_APP";
@@ -204,19 +205,6 @@ static void wifi_app_soft_ap_config(void)
 }
 
 /*!
- * @brief Task for wifi application
- * 
- * @param pvParameters 
-*/
-BaseType_t wifi_app_send_message(wifi_app_message_e msgID)
-{
-	wifi_app_queue_message_t msg;
-	msg.msgID = msgID;
-
-	return xQueueSend(wifi_app_queue_handle, &msg, portMAX_DELAY);
-}
-
-/*!
 * @brief Connects to the station
 *
 */
@@ -224,20 +212,6 @@ static void wifi_app_connect_sta(void)
 {
 	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, wifi_app_get_wifi_config()));
 	ESP_ERROR_CHECK(esp_wifi_connect());	
-}
-
-/*!
-* @brief Closes the AP and sets the wifi mode to STA
-*
-*/
-static void wifi_app_close_ap(void)
-{
-	wifi_mode_t mode;
-	ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_get_mode(&mode));
-	if(mode == WIFI_MODE_AP || mode == WIFI_MODE_APSTA)
-	{
-		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-	}
 }
 
 /*!
@@ -264,6 +238,62 @@ static void wifi_app_scan_wifi_networks(void)
 	ESP_ERROR_CHECK(esp_wifi_scan_stop());
 
 }
+
+/*!
+* @brief Closes the AP and sets the wifi mode to STA
+*
+*/
+static void wifi_app_close_ap(void)
+{
+	wifi_mode_t mode;
+	ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_get_mode(&mode));
+	if(mode == WIFI_MODE_AP || mode == WIFI_MODE_APSTA)
+	{
+		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+	}
+}
+
+/*!
+* @brief Reopens the AP
+* 
+*/
+static void app_wifi_reopen_ap(void)
+{
+	wifi_mode_t mode;
+	ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_get_mode(&mode));
+	if(mode == WIFI_MODE_STA)
+	{
+		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+		ESP_LOGI(TAG, "Reopening the AP");
+	}else 
+	{
+		ESP_LOGI(TAG, "AP is already open");
+	}
+}
+
+/*!
+* @brief Reopens the HTTP server
+*
+*/
+static void app_wifi_reopen_http_server(void)
+{
+	wifi_app_send_message(WIFI_APP_MSG_START_HTTP_SERVER);
+}
+
+/*!
+* @brief Clears the station credentials 
+* @note Also reopens the AP and HTTP server
+*
+*/
+static void app_wifi_clear_sta_creds(void)
+{
+	app_nvs_clear_sta_creds();
+
+	app_wifi_reopen_ap();
+
+	app_wifi_reopen_http_server();
+}
+
 
 /*!
  * @brief Task for wifi application
@@ -312,7 +342,11 @@ static void wifi_app_task(void *pvParameters)
 					break;
 				case WIFI_APP_MSG_STA_DISCONNECTED:
 					ESP_LOGI(TAG, "Disconnected from the station");
-					http_server_send_message(HTTP_SERVER_MSG_WIFI_CONNECT_FAIL);
+
+					//http_server_send_message(HTTP_SERVER_MSG_WIFI_CONNECT_FAIL); If AP closed, causes memory leak
+
+					///> Clear the STA credentials and reopen the AP and HTTP server
+					app_wifi_clear_sta_creds();  //!TODO: change name of the function
 					break;
 				case WIFI_APP_MSG_SCAN_WIFI_NETWORKS:
 					ESP_LOGI(TAG, "Scanning for wifi networks"); 
@@ -321,6 +355,10 @@ static void wifi_app_task(void *pvParameters)
 				case WIFI_APP_MSG_CLOSE_AP:
 					ESP_LOGI(TAG, "Closing the AP");
 					wifi_app_close_ap();
+					break;
+				case WIFI_APP_WRITE_STA_CREDENTIALS:
+					ESP_LOGI(TAG, "Writing STA credentials to NVS");
+					app_nvs_save_sta_creds();
 					break;
 				
 				default:
@@ -360,6 +398,11 @@ void wifi_app_init(void)
 	//Allocate memory for the wifi configuration
 	wifi_config = (wifi_config_t *)malloc(sizeof(wifi_config_t));
 	memset(wifi_config, 0, sizeof(wifi_config_t));
+
+	if(app_nvs_load_sta_creds())
+	{
+		ESP_LOGI(TAG, "Credentials loaded from NVS");
+	}
 	
 	//Create the wifi application queue
 	wifi_app_queue_handle = xQueueCreate(3, sizeof(wifi_app_queue_message_t));
@@ -371,4 +414,17 @@ void wifi_app_init(void)
 
 	xTaskCreatePinnedToCore(&wifi_app_task, "wifi_app_task", WIFI_APP_TASK_STACK_SIZE, NULL, WIFI_APP_TASK_PRIORITY, NULL, WIFI_APP_CORE_ID);
 
+}
+
+/*!
+ * @brief Task for wifi application
+ * 
+ * @param pvParameters 
+*/
+BaseType_t wifi_app_send_message(wifi_app_message_e msgID)
+{
+	wifi_app_queue_message_t msg;
+	msg.msgID = msgID;
+
+	return xQueueSend(wifi_app_queue_handle, &msg, portMAX_DELAY);
 }

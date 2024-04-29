@@ -55,6 +55,7 @@ typedef enum wifi_app_message
 	WIFI_APP_MSG_STA_DISCONNECTED, 
 	WIFI_APP_MSG_SCAN_WIFI_NETWORKS, 
 	WIFI_APP_MSG_CLOSE_AP,
+	WIFI_APP_WRITE_STA_CREDENTIALS,
 }wifi_app_message_e;
 
 /*!
