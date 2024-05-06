@@ -90,6 +90,7 @@ bool app_nvs_load_sta_creds(void)
 		uint8_t *wifi_config_buff = (uint8_t *)malloc(sizeof(uint8_t) * wifi_config_size);
 		memset(wifi_config_buff, 0x0, wifi_config_size);
 
+		wifi_config_size = sizeof(wifi_sta_config->sta.ssid);
 		esp_err = nvs_get_blob(nvshandle, "ssid", wifi_config_buff, &wifi_config_size);
 		if(esp_err != ESP_OK)
 		{
@@ -99,11 +100,12 @@ bool app_nvs_load_sta_creds(void)
 		}
 		memcpy(wifi_sta_config->sta.ssid,wifi_config_buff,wifi_config_size);
 
+		wifi_config_size = sizeof(wifi_sta_config->sta.password);
 		esp_err = nvs_get_blob(nvshandle, "password", wifi_config_buff, &wifi_config_size);
 		if(esp_err != ESP_OK)
 		{
 			free(wifi_config_buff);
-			ESP_LOGE(TAG, "ERROR: %s opening NVS handle!", esp_err_to_name(esp_err));
+			ESP_LOGE(TAG, "ERROR: %s reading password!", esp_err_to_name(esp_err));
 			return false;
 		}
 		memcpy(wifi_sta_config->sta.password,wifi_config_buff,wifi_config_size);

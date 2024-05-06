@@ -56,6 +56,7 @@ typedef enum wifi_app_message
 	WIFI_APP_MSG_SCAN_WIFI_NETWORKS, 
 	WIFI_APP_MSG_CLOSE_AP,
 	WIFI_APP_WRITE_STA_CREDENTIALS,
+	WIFI_APP_LOAD_STA_CREDENTIALS,
 }wifi_app_message_e;
 
 /*!
@@ -66,6 +67,15 @@ typedef struct wifi_app_queue_message
 {
 	wifi_app_message_e msgID;
 }wifi_app_queue_message_t;
+
+/*!
+* @brief Struct type for scanned wifi networks
+*
+*/
+typedef struct {
+	uint16_t ap_count;
+	wifi_ap_record_t ap_records[MAX_SCAN_LIST_SIZE];
+}wifi_app_wifi_scan_t;
 	
 /*!
  * @brief Sends a message to the queue
@@ -94,6 +104,6 @@ wifi_config_t* wifi_app_get_wifi_config(void);
 * @param  void
 * @return wifi_ap_record_t* 
 */
-wifi_ap_record_t* wifi_app_get_scanned_wifi_networks(void);
+wifi_app_wifi_scan_t* wifi_app_get_scanned_wifi_networks(void);
 
 #endif /* WIFI_APP_H_ */
