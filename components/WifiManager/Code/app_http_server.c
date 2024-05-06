@@ -278,13 +278,40 @@ static esp_err_t http_server_wifi_scan_result_json_handler(httpd_req_t *req)
 		if(g_wifi_connect_status == HTTP_SERVER_MSG_WIFI_SCAN_RESPONSE_GET)
 		{
 			char wifiScanJSON[100];
-			sprintf(wifiScanJSON, "{\"status\":%d, \"ap_count\":%d,", g_wifi_connect_status, wifi_scan->ap_count);
+			sprintf(wifiScanJSON, "{\"status\":%d, \"ap_count\":%d}", g_wifi_connect_status, wifi_scan->ap_count);
 			httpd_resp_set_type(req, "application/json");
 			httpd_resp_send(req, wifiScanJSON, strlen(wifiScanJSON));
 			break;
 		}
 		vTaskDelay(5000 / portTICK_PERIOD_MS);
 	}
+	return ESP_OK;
+}
+
+/*!
+* @brief HTTP Server Wifi Scan Result List JSON Handler
+* @note Responses with the Wifi Scan Result List
+*	@param req HTTP request
+* @return ESP_OK
+*/
+static esp_err_t http_server_wifi_scan_result_list_json_handler(httpd_req_t *req)
+{
+	char wifiScanJSON[1000];
+	sprintf(wifiScanJSON, "{\"status\":%d, \"ap_count\":%d, \"ap_records\":[", g_wifi_connect_status, wifi_scan->ap_count);
+	for(int i = 0; i < wifi_scan->ap_count; i++)
+	{
+		char temp[100];
+		sprintf(temp, "{\"ssid\":\"%s\", \"rssi\":%d, \"authmode\":%d}", wifi_scan->ap_records[i].ssid, wifi_scan->ap_records[i].rssi, wifi_scan->ap_records[i].authmode);
+		strcat(wifiScanJSON, temp);
+		if(i < wifi_scan->ap_count - 1)
+		{
+			strcat(wifiScanJSON, ",");
+		}
+	}
+	strcat(wifiScanJSON, "]}");
+	httpd_resp_set_type(req, "application/json");
+	httpd_resp_send(req, wifiScanJSON, strlen(wifiScanJSON));
+	
 	return ESP_OK;
 }
 
@@ -378,6 +405,14 @@ static httpd_handle_t http_server_configure(void)
 			.user_ctx = NULL
 		};
 
+		///>Wifi Scan Result List JSON handler
+		httpd_uri_t wifi_scan_result_list_json = {
+			.uri = "/listofScannedWifiNetworks",
+			.method = HTTP_POST,
+			.handler = http_server_wifi_scan_result_list_json_handler,
+			.user_ctx = NULL
+		};
+
 		///> Register the URI handlers
 		httpd_register_uri_handler(http_server_handle, &index_uri);
 		httpd_register_uri_handler(http_server_handle, &app_css_uri);
@@ -389,6 +424,7 @@ static httpd_handle_t http_server_configure(void)
 		httpd_register_uri_handler(http_server_handle, &wifi_connect_status_json);
 		///> Register the URI handlers for Wifi Scan
 		httpd_register_uri_handler(http_server_handle, &wifi_scan_result_json);
+		httpd_register_uri_handler(http_server_handle, &wifi_scan_result_list_json);
 
 		return http_server_handle;
 	}
