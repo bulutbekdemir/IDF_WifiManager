@@ -8,10 +8,32 @@ var wifiConnectInterval = null;
  * Initialize functions here.
  */
 $(document).ready(function(){
+    getWifiNetworks();
+    /*
     $("#connect_wifi").on("click", function(){
         checkCredentials();
-    }); 
+    });*/ 
 });  
+
+/*!
+* Gets the wifi networks.
+*/
+function getWifiNetworks()
+{
+    var xhr = new XMLHttpRequest();
+    var requestURL = "/scannedWifiNetworks";
+    xhr.open('POST', requestURL, false);
+    xhr.send('scannedWifiNetworks');
+
+    if(xhr.readyState == 4 && xhr.status == 200)
+    {
+        var response = JSON.parse(xhr.responseText);
+       
+        document.getElementById("wifi_connect_status").innerHTML = "<h4 class='rd'>Status:" + response.ap_count + "</h4>";
+        document.getElementById("wifi_connect_status").innerHTML = "<h4 class='rd'>Scanned:" + response.ap_count + "</h4>";
+          
+    }
+}
 
 /*!
 * Gets wifi connection status.

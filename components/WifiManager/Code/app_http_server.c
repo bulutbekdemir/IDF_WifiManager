@@ -21,6 +21,9 @@ static const char *TAG = "HTTP_SERVER";
 ///> Wifi Connect Status
 static int g_wifi_connect_status = -1;
 
+///>Wifi Scan Result
+wifi_app_wifi_scan_t *wifi_scan;
+
 ///> HTTP Server task handle
 static httpd_handle_t http_server_handle = NULL;
 
@@ -72,6 +75,31 @@ static void http_server_timer_update_reset_timer(void *arg)
 }
 
 /*!
+* @brief Get the Wifi Scan Result
+*/
+static void http_server_get_wifi_scan_result(void)
+{	
+	wifi_scan = (wifi_app_wifi_scan_t *)malloc(sizeof(wifi_app_wifi_scan_t));
+	wifi_scan = wifi_app_get_scanned_wifi_networks();	
+	if((*wifi_scan).ap_count > 0)
+	{	
+		ESP_LOGI(TAG, "Scanned Wifi Networks: %d", (*wifi_scan).ap_count);
+		for(int i = 0; i < (*wifi_scan).ap_count; i++)
+		{
+			ESP_LOGI(TAG, "SSID: %s, RSSI: %d ,AUTH: %d", (*wifi_scan).ap_records[i].ssid, (*wifi_scan).ap_records[i].rssi, (*wifi_scan).ap_records[i].authmode);
+		}
+	}
+	else
+	{
+		ESP_LOGW(TAG, "No Wifi Networks found %d", wifi_scan->ap_count);
+	}
+
+	http_server_send_message(HTTP_SERVER_MSG_WIFI_SCAN_RESPONSE_GET);
+	
+}	
+
+
+/*!
 * @brief HTTP Server Monitor Task
 * @note  Use the track events of the HTTP Server
 *
@@ -98,10 +126,16 @@ static void http_server_monitor_task(void *pvParameters)
 					break;
 				case HTTP_SERVER_MSG_WIFI_SCAN_DONE:
 					ESP_LOGI(TAG, "HTTP_SERVER_MSG_WIFI_SCAN_DONE");
-					//!TODO: Implement the scan done event
+					http_server_get_wifi_scan_result();
 					break;
-				///> USER CODE HERE - Add more cases for more custom events to track
-				///> @warning Do NOT touch other parts of the code unless you know what you are doing 
+				case HTTP_SERVER_MSG_WIFI_SCAN_START:
+					ESP_LOGI(TAG, "HTTP_SERVER_MSG_WIFI_SCAN_START");
+					wifi_app_send_message(WIFI_APP_MSG_SCAN_WIFI_NETWORKS);
+					break;
+				case HTTP_SERVER_MSG_WIFI_SCAN_RESPONSE_GET:
+					ESP_LOGI(TAG, "HTTP_SERVER_MSG_WIFI_SCAN_RESPONSE_GET");
+					g_wifi_connect_status = HTTP_SERVER_MSG_WIFI_SCAN_RESPONSE_GET;
+					break;
 				default:
 					break;
 			}
@@ -239,8 +273,18 @@ static esp_err_t http_server_wifi_status_json_handler(httpd_req_t *req)
 */
 static esp_err_t http_server_wifi_scan_result_json_handler(httpd_req_t *req)
 {
-	//!TODO: Implement the Wifi Scan Result JSON Handler
-	asm("nop");
+	http_server_send_message(HTTP_SERVER_MSG_WIFI_SCAN_START);
+	while(true){
+		if(g_wifi_connect_status == HTTP_SERVER_MSG_WIFI_SCAN_RESPONSE_GET)
+		{
+			char wifiScanJSON[100];
+			sprintf(wifiScanJSON, "{\"status\":%d, \"ap_count\":%d,", g_wifi_connect_status, wifi_scan->ap_count);
+			httpd_resp_set_type(req, "application/json");
+			httpd_resp_send(req, wifiScanJSON, strlen(wifiScanJSON));
+			break;
+		}
+		vTaskDelay(5000 / portTICK_PERIOD_MS);
+	}
 	return ESP_OK;
 }
 
@@ -326,9 +370,9 @@ static httpd_handle_t http_server_configure(void)
 			.user_ctx = NULL
 		};
 
-		///>Wifi Scan Result JSON handler
+		///>Wifi Scan Result JSON handlerwifiScanResult
 		httpd_uri_t wifi_scan_result_json = {
-			.uri = "/wifiScanResult",
+			.uri = "/scannedWifiNetworks",
 			.method = HTTP_POST,
 			.handler = http_server_wifi_scan_result_json_handler,
 			.user_ctx = NULL

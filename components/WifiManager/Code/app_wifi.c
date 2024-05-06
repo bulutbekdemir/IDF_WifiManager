@@ -24,10 +24,13 @@
 static const char *TAG = "WIFI_APP";
 
 //Used for returning the wifi configuration
-wifi_config_t *wifi_config = NULL;
+wifi_config_t *wifi_config = NULL; //!TODO: change name of the variable
 
-//Used for returning the scanned wifi networks
-wifi_ap_record_t *wifi_ap_records = NULL;
+//Used to store the wifi scan list
+wifi_app_wifi_scan_t *g_p_wifi_scan_records = NULL;
+
+//Used to track if the NVS is loaded
+bool static g_nvs_loaded = false;
 
 //Used to track number of retries for wifi connection
 static int g_wifi_connect_retries;
@@ -107,7 +110,6 @@ static void wifi_app_event_handler(void *arg, esp_event_base_t event_base, int32
 				break;
 			case WIFI_EVENT_SCAN_DONE:
 				ESP_LOGI(TAG, "WIFI_EVENT_SCAN_DONE");
-				http_server_send_message(HTTP_SERVER_MSG_WIFI_SCAN_DONE);
 				break;
 			default:
 				break;
@@ -220,23 +222,15 @@ static void wifi_app_connect_sta(void)
 */
 static void wifi_app_scan_wifi_networks(void)
 {
-	wifi_ap_records = (wifi_ap_record_t *)malloc(MAX_SCAN_LIST_SIZE * sizeof(wifi_ap_record_t));
-	uint16_t number_of_ap = 0;
+	g_p_wifi_scan_records = (wifi_app_wifi_scan_t *)calloc(1 ,sizeof(wifi_app_wifi_scan_t)); 
+	
+	g_p_wifi_scan_records->ap_count = MAX_SCAN_LIST_SIZE;
 
-	wifi_scan_config_t scan_config = {
-		.ssid = (uint8_t *)WIFI_SCAN_SSID,
-		.bssid = (uint8_t *)WIFI_SCAN_BSSID,
-		.channel = WIFI_SCAN_CHANNEL,
-		.show_hidden = WIFI_SCAN_SHOW_HIDDEN,
-		.scan_type = WIFI_SCAN_TYPE,
-		.scan_time.active.min = WIFI_SCAN_TIME_MIN,
-		.scan_time.active.max = WIFI_SCAN_TIME_MAX,
-	};
+	ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
+	ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num((uint16_t *)&(*g_p_wifi_scan_records).ap_count));
+	ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records((uint16_t *) &(*g_p_wifi_scan_records).ap_count, (*g_p_wifi_scan_records).ap_records));
 
-	ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, true));
-	ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number_of_ap, wifi_ap_records));
-	ESP_ERROR_CHECK(esp_wifi_scan_stop());
-
+	http_server_send_message(HTTP_SERVER_MSG_WIFI_SCAN_DONE);
 }
 
 /*!
@@ -312,7 +306,7 @@ static void wifi_app_task(void *pvParameters)
 
 	ESP_ERROR_CHECK(esp_wifi_start());
 
-	wifi_app_send_message(WIFI_APP_MSG_START_HTTP_SERVER);
+	wifi_app_send_message(WIFI_APP_LOAD_STA_CREDENTIALS);
 
 	while(1)
 	{
@@ -338,7 +332,10 @@ static void wifi_app_task(void *pvParameters)
 					break;
 				case WIFI_APP_MSG_STA_CONNECTED_GOT_IP:
 					ESP_LOGI(TAG, "Connected and got IP");
+					if(!g_nvs_loaded)
+					{
 					http_server_send_message(HTTP_SERVER_MSG_WIFI_CONNECT_SUCCESS);
+					}
 					break;
 				case WIFI_APP_MSG_STA_DISCONNECTED:
 					ESP_LOGI(TAG, "Disconnected from the station");
@@ -360,6 +357,21 @@ static void wifi_app_task(void *pvParameters)
 					ESP_LOGI(TAG, "Writing STA credentials to NVS");
 					app_nvs_save_sta_creds();
 					break;
+				case WIFI_APP_LOAD_STA_CREDENTIALS:
+					ESP_LOGI(TAG, "Loading STA credentials from NVS");
+					if(app_nvs_load_sta_creds())
+					{
+						ESP_LOGI(TAG, "Credentials loaded from NVS");
+						g_nvs_loaded = true;
+						wifi_app_close_ap();
+						wifi_app_connect_sta();
+					}
+					else
+					{
+						ESP_LOGI(TAG, "No credentials found in NVS");
+						wifi_app_send_message(WIFI_APP_MSG_START_HTTP_SERVER);
+					}
+					break;
 				
 				default:
 					break;
@@ -380,9 +392,9 @@ wifi_config_t* wifi_app_get_wifi_config(void)
 * @brief Gets the scan list of wifi networks
 *
 */
-wifi_ap_record_t* wifi_app_get_scanned_wifi_networks(void)
+wifi_app_wifi_scan_t* wifi_app_get_scanned_wifi_networks(void)
 {
-	return wifi_ap_records;
+	return g_p_wifi_scan_records;
 }
 
 /*!
@@ -398,11 +410,6 @@ void wifi_app_init(void)
 	//Allocate memory for the wifi configuration
 	wifi_config = (wifi_config_t *)malloc(sizeof(wifi_config_t));
 	memset(wifi_config, 0, sizeof(wifi_config_t));
-
-	if(app_nvs_load_sta_creds())
-	{
-		ESP_LOGI(TAG, "Credentials loaded from NVS");
-	}
 	
 	//Create the wifi application queue
 	wifi_app_queue_handle = xQueueCreate(3, sizeof(wifi_app_queue_message_t));
