@@ -36,10 +36,6 @@ function getWifiNetworks()
         var response = JSON.parse(xhr.responseText);
        
         log(response);
-				for(var i = 0; i < response.length; i++)
-				{
-						AddNew(response[i].ssid, response[i].password);
-				}
           
     }
 }

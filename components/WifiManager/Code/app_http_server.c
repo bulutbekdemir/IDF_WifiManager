@@ -45,8 +45,8 @@ esp_timer_handle_t http_server_timer_AP_close_handle;
 ///> Embedded binary data for index.html, app.css, app.js, jquery-3.3.1.min.js and favicon.ico
 extern const uint8_t index_html_start[] asm("_binary_index_html_start");
 extern const uint8_t index_html_end[] asm("_binary_index_html_end");
-extern const uint8_t app_css_start[] asm("_binary_app_css_start");
-extern const uint8_t app_css_end[] asm("_binary_app_css_end");
+extern const uint8_t scan_css_start[] asm("_binary_scan_css_start");
+extern const uint8_t scan_css_end[] asm("_binary_scan_css_end");
 extern const uint8_t app_js_start[] asm("_binary_app_js_start");
 extern const uint8_t app_js_end[] asm("_binary_app_js_end");
 extern const uint8_t jquery_3_3_1_min_js_start[] asm("_binary_jquery_3_3_1_min_js_start");
@@ -163,7 +163,7 @@ static esp_err_t http_server_index_handler(httpd_req_t *req)
 static esp_err_t http_server_app_css_handler(httpd_req_t *req)
 {
 	httpd_resp_set_type(req, "text/css");
-	httpd_resp_send(req, (const char *)app_css_start, app_css_end - app_css_start);
+	httpd_resp_send(req, (const char *)scan_css_start, scan_css_end - scan_css_start);
 	return ESP_OK;
 }
 
@@ -327,7 +327,7 @@ static httpd_handle_t http_server_configure(void)
 		};
 
 		httpd_uri_t app_css_uri = {
-			.uri = "/app.css",
+			.uri = "/scan.css",
 			.method = HTTP_GET,
 			.handler = http_server_app_css_handler,
 			.user_ctx = NULL
