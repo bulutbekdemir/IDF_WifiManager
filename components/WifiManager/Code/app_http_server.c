@@ -49,6 +49,12 @@ extern const uint8_t scan_css_start[] asm("_binary_scan_css_start");
 extern const uint8_t scan_css_end[] asm("_binary_scan_css_end");
 extern const uint8_t app_js_start[] asm("_binary_app_js_start");
 extern const uint8_t app_js_end[] asm("_binary_app_js_end");
+extern const uint8_t password_html_start[] asm("_binary_password_html_start");
+extern const uint8_t password_html_end[] asm("_binary_password_html_end");
+extern const uint8_t password_css_start[] asm("_binary_password_css_start");
+extern const uint8_t password_css_end[] asm("_binary_password_css_end");
+extern const uint8_t password_js_start[] asm("_binary_password_js_start");
+extern const uint8_t password_js_end[] asm("_binary_password_js_end");
 extern const uint8_t jquery_3_3_1_min_js_start[] asm("_binary_jquery_3_3_1_min_js_start");
 extern const uint8_t jquery_3_3_1_min_js_end[] asm("_binary_jquery_3_3_1_min_js_end");
 extern const uint8_t favicon_ico_start[] asm("_binary_favicon_ico_start");
@@ -178,6 +184,43 @@ static esp_err_t http_server_app_js_handler(httpd_req_t *req)
 	httpd_resp_send(req, (const char *)app_js_start, app_js_end - app_js_start);
 	return ESP_OK;
 }
+
+/*!
+* @brief HTTP Server Password HTML Handler
+* @note Handles the password.html request
+*
+*/
+static esp_err_t http_server_password_html_handler(httpd_req_t *req)
+{
+	httpd_resp_set_type(req, "text/html");
+	httpd_resp_send(req, (const char *)password_html_start, password_html_end - password_html_start);
+	return ESP_OK;
+}
+
+/*!
+* @brief HTTP Server Password CSS Handler
+* @note Handles the password.css request
+*
+*/
+static esp_err_t http_server_password_css_handler(httpd_req_t *req)
+{
+	httpd_resp_set_type(req, "text/css");
+	httpd_resp_send(req, (const char *)password_css_start, password_css_end - password_css_start);
+	return ESP_OK;
+}
+
+/*!
+* @brief HTTP Server Password JS Handler
+* @note Handles the password.js request
+*
+*/
+static esp_err_t http_server_password_js_handler(httpd_req_t *req)
+{
+	httpd_resp_set_type(req, "text/javascript");
+	httpd_resp_send(req, (const char *)password_js_start, password_js_end - password_js_start);
+	return ESP_OK;
+}
+
 
 /*!
 * @brief HTTP Server Jquery Handler
@@ -367,6 +410,27 @@ static httpd_handle_t http_server_configure(void)
 			.user_ctx = NULL
 		};
 
+		httpd_uri_t password_html_uri = {
+			.uri = "/password.html",
+			.method = HTTP_GET,
+			.handler = http_server_password_html_handler,
+			.user_ctx = NULL
+		};
+
+		httpd_uri_t password_css_uri = {
+			.uri = "/password.css",
+			.method = HTTP_GET,
+			.handler = http_server_password_css_handler,
+			.user_ctx = NULL
+		};
+
+		httpd_uri_t password_js_uri = {
+			.uri = "/password.js",
+			.method = HTTP_GET,
+			.handler = http_server_password_js_handler,
+			.user_ctx = NULL
+		};
+
 		httpd_uri_t jquery_uri = {
 			.uri = "/jquery-3.3.1.min.js",
 			.method = HTTP_GET,
@@ -417,6 +481,9 @@ static httpd_handle_t http_server_configure(void)
 		httpd_register_uri_handler(http_server_handle, &index_uri);
 		httpd_register_uri_handler(http_server_handle, &app_css_uri);
 		httpd_register_uri_handler(http_server_handle, &app_js_uri);
+		httpd_register_uri_handler(http_server_handle, &password_html_uri);
+		httpd_register_uri_handler(http_server_handle, &password_css_uri);
+		httpd_register_uri_handler(http_server_handle, &password_js_uri);
 		httpd_register_uri_handler(http_server_handle, &jquery_uri);
 		httpd_register_uri_handler(http_server_handle, &favicon_uri);
 		///> Register the URI handlers for Wifi Connect
