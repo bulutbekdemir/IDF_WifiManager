@@ -1,2 +1,3 @@
 # THIS PROJECT IS MOVED. 
-Project new repo is: 
+Project new repo is: https://github.com/bulutbekdemir/ESP32_WifiManager
+It is a buggy version, project changed a lot...
